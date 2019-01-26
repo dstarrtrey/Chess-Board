@@ -1,0 +1,20 @@
+.chess-board{
+  width: 700px;
+  height: 700px;
+  border: 10px solid black;
+  display: grid;
+  grid-template-columns: repeat(8, 1fr);
+  grid-template-rows: repeat(8, 1fr); 
+}
+.chess-board div:hover{
+  background-color: #a98cff;
+}
+.black{
+  background-color: gray;
+}
+.white{
+  background-color: white;
+}
+img{
+  width: 100%;
+}
