@@ -20,86 +20,135 @@ $(document).ready(function() {
     g: ["wk2", "wp7", 3, 4, 5, 6, "bp7", "bk2"],
     h: ["wr2", "wp8", 3, 4, 5, 6, "bp8", "br2"]
   };
+  const letters = ["a", "b", "c", "d", "e", "f", "g", "h"];
   const PIECES = {
     wp1: {
       img: "assets/images/wp.png",
       start: "a2",
-      type: "pawn"
+      type: "pawn",
+      blocked: false,
+      hasBeenMoved: false,
+      canCapture: false
     },
     wp2: {
       img: "assets/images/wp.png",
       start: "b2",
-      type: "pawn"
+      type: "pawn",
+      blocked: false,
+      hasBeenMoved: false,
+      canCapture: false
     },
     wp3: {
       img: "assets/images/wp.png",
       start: "c2",
-      type: "pawn"
+      type: "pawn",
+      blocked: false,
+      hasBeenMoved: false,
+      canCapture: false
     },
     wp4: {
       img: "assets/images/wp.png",
       start: "d2",
-      type: "pawn"
+      type: "pawn",
+      blocked: false,
+      hasBeenMoved: false,
+      canCapture: false
     },
     wp5: {
       img: "assets/images/wp.png",
       start: "e2",
-      type: "pawn"
+      type: "pawn",
+      blocked: false,
+      hasBeenMoved: false,
+      canCapture: false
     },
     wp6: {
       img: "assets/images/wp.png",
       start: "f2",
-      type: "pawn"
+      type: "pawn",
+      blocked: false,
+      hasBeenMoved: false,
+      canCapture: false
     },
     wp7: {
       img: "assets/images/wp.png",
       start: "g2",
-      type: "pawn"
+      type: "pawn",
+      blocked: false,
+      hasBeenMoved: false,
+      canCapture: false
     },
     wp8: {
       img: "assets/images/wp.png",
       start: "h2",
-      type: "pawn"
+      type: "pawn",
+      blocked: false,
+      hasBeenMoved: false,
+      canCapture: false
     },
     bp1: {
       img: "assets/images/bp.png",
       start: "a7",
-      type: "pawn"
+      type: "pawn",
+      blocked: false,
+      hasBeenMoved: false,
+      canCapture: false
     },
     bp2: {
       img: "assets/images/bp.png",
       start: "b7",
-      type: "pawn"
+      type: "pawn",
+      blocked: false,
+      hasBeenMoved: false,
+      canCapture: false
     },
     bp3: {
       img: "assets/images/bp.png",
       start: "c7",
-      type: "pawn"
+      type: "pawn",
+      blocked: false,
+      hasBeenMoved: false,
+      canCapture: false
     },
     bp4: {
       img: "assets/images/bp.png",
       start: "d7",
-      type: "pawn"
+      type: "pawn",
+      blocked: false,
+      hasBeenMoved: false,
+      canCapture: false
     },
     bp5: {
       img: "assets/images/bp.png",
       start: "e7",
-      type: "pawn"
+      type: "pawn",
+      blocked: false,
+      hasBeenMoved: false,
+      canCapture: false
     },
     bp6: {
       img: "assets/images/bp.png",
       start: "f7",
-      type: "pawn"
+      type: "pawn",
+      blocked: false,
+      hasBeenMoved: false,
+      canCapture: false
     },
     bp7: {
       img: "assets/images/bp.png",
       start: "g7",
-      type: "pawn"
+      type: "pawn",
+      blocked: false,
+      hasBeenMoved: false,
+      canCapture: false
     },
     bp8: {
       img: "assets/images/bp.png",
       start: "h7",
-      type: "pawn"
+      type: "pawn",
+      blocked: false,
+      hasBeenMoved: false,
+      canCapture: false
     },
     wr1: {
       img: "assets/images/wr.png",
@@ -185,29 +234,60 @@ $(document).ready(function() {
   const setUpGame = () => {
     Object.keys(PIECES).forEach(piece => {
       let currentPiece = PIECES[piece];
-      $(`#${currentPiece.start}`).attr("data-occupying", piece);
+      $(`#${currentPiece.start}`)
+        .attr("data-occupying", piece)
+        .addClass(`${piece[0]} piece`);
       const imgFill = $("<img>").attr("src", currentPiece.img);
       $(`#${currentPiece.start}`).html(imgFill);
     });
   };
   const MOVEMENT = {
     pawn: {
-      moveOptions: () => {
-        if (this.canCapture === false) {
-          if (this.blocked === false) {
-            if (this.hasBeenMoved === false) {
+      moveOptions: piece => {
+        if (piece.canCapture === false) {
+          if (piece.blocked === false) {
+            if (piece.hasBeenMoved === false) {
               return [[0, 1], [0, 2]];
             } else {
               return [[0, 1]];
             }
           } else {
-            if (this.apassant === false) {
-              return [[1, 1]];
-            }
+            return [[1, 1]];
           }
         }
-      }
+      },
+      blocked: false,
+      hasBeenMoved: false,
+      canCapture: false
     }
   };
+  const showMovementOptions = (piece, position) => {
+    const optionsArr = MOVEMENT[piece.type].moveOptions(piece);
+    for (let x = 0; x < optionsArr.length; x++) {
+      let optionX = optionsArr[x][0];
+      let optionY = optionsArr[x][1];
+      let newXY =
+        letters[letters.indexOf(position[0]) + optionX] +
+        (parseInt(position[1]) + optionY);
+      console.log(newXY);
+      $(`#${newXY}`).addClass("hover");
+    }
+  };
+  let myTurn = true;
+  let myColor = "white";
   setUpGame();
+  $(document).on("click", ".piece", function() {
+    let coordinate = $(this).attr("id");
+    if (myTurn === true && myColor === "white") {
+      if ($(this).hasClass("w")) {
+        const thisPiece = PIECES[$(this).attr("data-occupying")];
+        showMovementOptions(thisPiece, coordinate);
+        console.log(thisPiece);
+      }
+    } else if (myTurn === true && myColor === "b") {
+      if ($(this).hasClass("black")) {
+        //
+      }
+    }
+  });
 });
