@@ -20,8 +20,4 @@ img{
 }
 .hover{
   background-color: #e9b5f0;
-  box-sizing: border-box;
-  border-top: 1px solid black;
-  border-right: 1px solid black;
-  border-left: 1px solid black;
 }
