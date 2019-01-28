@@ -207,10 +207,7 @@ $(document).ready(function() {
     }
   };
   const WHITEMOVEMENTOPTIONS = {
-    pawn: (piece, location) => {
-      let locArr = location.split("");
-      let x = locArr[0];
-      let y = locArr[1] - 1;
+    pawn: (piece, x, y) => {
       let moveArr = [];
       if (chessboard[x][y + 1] === "empty") {
         if (y + 1 < 8) {
@@ -242,14 +239,116 @@ $(document).ready(function() {
         }
       }
       return moveArr;
+    },
+    knight: (piece, x, y) => {
+      const allOptions = [];
+      for (let x = -2; x <= 2; x++) {
+        if (x !== 0) {
+          for (let y = -2; y <= 2; y++) {
+            if (Math.abs(y) !== Math.abs(x) && y !== 0) {
+              allOptions.push([x, y]);
+            }
+          }
+        }
+      }
+      let moveArr = [];
+      allOptions.forEach(option => {
+        let optionX = letters[letters.indexOf(x) + option[0]];
+        let optionY = y + option[1];
+        if (optionX && optionY < 8 && optionY >= 0) {
+          if (
+            chessboard[optionX][optionY] &&
+            chessboard[optionX][optionY].charAt(0) !== "w"
+          ) {
+            moveArr.push([optionX, optionY]);
+          }
+        }
+      });
+      return moveArr;
+    },
+    bishop: (piece, x, y) => {
+      let xIndex = letters.indexOf(x);
+      const upLeft = [];
+      const downLeft = [];
+      const upRight = [];
+      const downRight = [];
+      let moveArr = [];
+      for (let x = 1; x < xIndex + 1; x++) {
+        if (y + x < 8) {
+          upLeft.push([xIndex - x, y + x]);
+        }
+        if (y - x > -1) {
+          downLeft.push([xIndex - x, y - x]);
+        }
+      }
+      for (let x = 1; x < 8 - xIndex; x++) {
+        if (y + x < 8) {
+          upRight.push([xIndex + x, y + x]);
+        }
+        if (y - x > -1) {
+          downRight.push([xIndex + x, y - x]);
+        }
+      }
+      upLeft.sort((a, b) => b[0] - a[0]);
+      downLeft.sort((a, b) => b[0] - a[0]);
+      upRight.sort((a, b) => a[0] - b[0]);
+      downRight.sort((a, b) => a[0] - b[0]);
+      for (let x = 0; x < upLeft.length; x++) {
+        let opt = upLeft[x];
+        if (chessboard[letters[opt[0]]][opt[1]] === "empty") {
+          moveArr.push(chessboard[letters[opt[0]]][opt[1]]);
+        } else if (chessboard[letters[opt[0]]][opt[1]].charAt(0) === "b") {
+          moveArr.push(chessboard[letters[opt[0]]][opt[1]]);
+          break;
+        } else {
+          break;
+        }
+      }
+      for (let x = 0; x < upRight.length; x++) {
+        let opt = upRight[x];
+        if (chessboard[letters[opt[0]]][opt[1]] === "empty") {
+          moveArr.push(chessboard[letters[opt[0]]][opt[1]]);
+        } else if (chessboard[letters[opt[0]]][opt[1]].charAt(0) === "b") {
+          moveArr.push(chessboard[letters[opt[0]]][opt[1]]);
+          break;
+        } else {
+          break;
+        }
+      }
+      for (let x = 0; x < downLeft.length; x++) {
+        let opt = downLeft[x];
+        if (chessboard[letters[opt[0]]][opt[1]] === "empty") {
+          moveArr.push(chessboard[letters[opt[0]]][opt[1]]);
+        } else if (chessboard[letters[opt[0]]][opt[1]].charAt(0) === "b") {
+          moveArr.push(chessboard[letters[opt[0]]][opt[1]]);
+          break;
+        } else {
+          break;
+        }
+      }
+      for (let x = 0; x < downRight.length; x++) {
+        let opt = downRight[x];
+        if (chessboard[letters[opt[0]]][opt[1]] === "empty") {
+          moveArr.push(chessboard[letters[opt[0]]][opt[1]]);
+        } else if (chessboard[letters[opt[0]]][opt[1]].charAt(0) === "b") {
+          moveArr.push(chessboard[letters[opt[0]]][opt[1]]);
+          break;
+        } else {
+          break;
+        }
+      }
+      return moveArr;
     }
   };
   const showMovementOptions = arr => {
     $(".hover").removeClass("hover");
-    arr.forEach(opt => {
-      opt[1]++;
-      $(`#${opt.join("")}`).addClass("hover");
-    });
+    if (arr) {
+      console.log("moves array: ", arr);
+      arr.forEach(opt => {
+        opt[1]++;
+        $(`#${opt.join("")}`).addClass("hover");
+      });
+    }
   };
   const setUpGame = () => {
     Object.keys(PIECES).forEach(piece => {
@@ -266,14 +365,14 @@ $(document).ready(function() {
   setUpGame();
   $(document).on("click", ".piece", function() {
     let coordinate = $(this).attr("id");
+    let locArr = coordinate.split("");
+    let xPos = locArr[0];
+    let yPos = locArr[1] - 1;
     if (myTurn === true && myColor === "white") {
       if ($(this).hasClass("w")) {
         const thisPiece = PIECES[$(this).attr("data-occupying")];
-        console.log(
-          WHITEMOVEMENTOPTIONS[thisPiece.type](thisPiece, coordinate)
-        );
         showMovementOptions(
-          WHITEMOVEMENTOPTIONS[thisPiece.type](thisPiece, coordinate)
+          WHITEMOVEMENTOPTIONS[thisPiece.type](thisPiece, xPos, yPos)
         );
       }
     } else if (myTurn === true && myColor === "black") {
