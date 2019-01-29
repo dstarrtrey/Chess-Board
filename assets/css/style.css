@@ -1,23 +1,48 @@
+body{
+  margin: 0;
+  padding: 0;
+}
 .chess-board{
-  width: 700px;
-  height: 700px;
+  width: 100vw;
+  max-width: 728px;
+  height: 100vw;
+  max-height: 728px;
   border: 10px solid black;
   display: grid;
-  grid-template-columns: repeat(8, 1fr);
-  grid-template-rows: repeat(8, 1fr); 
+  margin: 0; 
+  padding: 0;
+  box-sizing: border-box;
+  grid-template-columns: repeat(8, 12.5%);
+  grid-template-rows: repeat(8, 12.5%); 
 }
 .chess-board div:hover{
   background-color: #a98cff;
+  transition: none;
 }
 .black{
   background-color: gray;
 }
 .white{
-  background-color: white;
+  background-color: #fff362;
+  transition: background-color .5s linear;  
+}
+.aqua{
+  background-color: #adefe7;
 }
 img{
   width: 100%;
+  height: 100%;
+  padding: 0;
+  margin: 0;
 }
-.hover{
+.hover.white{
   background-color: #e9b5f0;
+  transition: background-color 0s linear;
+}
+.hover.black{
+  background-color: #e099ea;
+  transition: background-color 0s linear;
+}
+.selected{
+  background-color: #ff6a6a;
 }
