@@ -10,6 +10,27 @@ $(document).ready(function() {
   };
   firebase.initializeApp(config);
   const database = firebase.database();
+  database.ref("/chessboard").on("value", function(snapshot) {
+    console.log(snapshot.val());
+    Object.keys(snapshot.val()).forEach(letter => {
+      console.log(snapshot.val()[letter]);
+      for (let y = 0; y < snapshot.val()[letter].length; y++){
+        $(`#${letter}${y + 1}`)
+          .removeClass("w b piece")
+          .attr("data-occupying", "")
+          .empty();
+        console.log(snapshot.val()[letter][y][0]);
+        if (snapshot.val()[letter][y][0] != "e") {
+          $(`#${letter}${y + 1}`)
+            .addClass(`${snapshot.val()[letter][y][0]} piece`)
+            .attr("data-occupying", snapshot.val()[letter][y])
+            .append(
+              $("<img>").attr("src", PIECES[snapshot.val()[letter][y]].img)
+            );
+        }
+      }
+    });
+  });
   //THIS IS SIDEWAYS
   const chessboardTemplate = {
     a: [1, 2, 3, 4, 5, 6, 7, 8],
@@ -272,6 +293,7 @@ $(document).ready(function() {
       .addClass(`${piece.name.charAt(0)} piece`)
       .attr("data-occupying", piece.name)
       .append($("<img>").attr("src", piece.img));
+    database.ref("/chessboard").set(chessboard);
   };
   const WHITEMOVEMENTOPTIONS = {
     pawn: (piece, x, y) => {
@@ -495,7 +517,7 @@ $(document).ready(function() {
       return moveArr;
     }
   };
-  const BLACKMOVEOPTIONS = {
+  const BLACKMOVEMENTOPTIONS = {
     pawn: (piece, x, y) => {
       let moveArr = [];
       if (chessboard[x][y - 1] === "empty") {
@@ -727,6 +749,15 @@ $(document).ready(function() {
     }
   };
   const setUpGame = () => {
+    chessboard = JSON.parse(JSON.stringify(chessboardStart));
+    database.ref("/chessboard").set(chessboard);
+    Object.keys(PIECES).forEach(piece => {
+      PIECES[piece].hasBeenMoved = false;
+    });
+    $(".piece")
+      .empty()
+      .removeClass("w b piece")
+      .attr("data-occupying", "");
     Object.keys(PIECES).forEach(piece => {
       let currentPiece = PIECES[piece];
       $(`#${currentPiece.start}`)
@@ -735,6 +766,36 @@ $(document).ready(function() {
       const imgFill = $("<img>").attr("src", currentPiece.img);
       $(`#${currentPiece.start}`).html(imgFill);
     });
+  };
+  const isCheck = () => {
+    const king = myColor[0] + "ki";
+    const myKingPosition = [];
+    for (let x = 0; x < 8; x++) {
+      for (let y = 0; y < 8; y++) {
+        if (chessboard[letters[x]][y] === king) {
+          myKingPosition.push(letters[x], [y]);
+          break;
+        }
+      }
+      if (myKingPosition.length > 0) break;
+    }
+    const opponentPieces = $(`.${opponentColor[0]}`);
+    opponentPieces.forEach(piece => {
+      const whichPiece = PIECES[piece.attr("data-occupying")];
+      const pieceXY = piece.attr("id").split("");
+      let pieceOpts = [];
+      if (myColor === "white") {
+        pieceOpts = BLACKMOVEMENTOPTIONS[whichPiece.type](
+          whichPiece,
+          pieceXY[0],
+          pieceXY[1]
+        );
+        if (pieceOpts.includes(myKingPosition)) {
+          return true;
+        }
+      }
+    });
+    return false;
   };
   let myTurn = true;
   let myColor = "white";
@@ -750,7 +811,6 @@ $(document).ready(function() {
   } else {
     $("whose-turn").text(opponentColor.toUpperCase());
   }
-  setUpGame();
   $(document).on("click", ".piece", function() {
     if (!$(this).hasClass("hover") && !$(this).hasClass("selected")) {
       let coordinate = $(this).attr("id");
@@ -784,5 +844,8 @@ $(document).ready(function() {
       $(".selected").attr("id"),
       $(this).attr("id")
     );
+  });
+  $(document).on("click", "#new-game", function() {
+    setUpGame();
   });
 });
