@@ -803,9 +803,9 @@ $(document).ready(function() {
   ////////////////////////////////////////////////
   //background shifting!!!!!
   ////////////////////////////////////////////////
-  // const colorInterval = setInterval(function() {
-  //   $(".white").toggleClass("aqua");
-  // }, 500);
+  const colorInterval = setInterval(function() {
+    $(".white").toggleClass("aqua");
+  }, 500);
   if (myTurn === true) {
     $("#whose-turn").text(myColor.toUpperCase());
   } else {
