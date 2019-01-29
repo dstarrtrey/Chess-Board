@@ -23,7 +23,8 @@ body{
   background-color: gray;
 }
 .white{
-  background-color: #fff362;
+  background-color: white;
+  /* background-color: #fff362; */
   transition: background-color .5s linear;  
 }
 .aqua{
