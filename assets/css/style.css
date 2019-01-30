@@ -1,12 +1,44 @@
 body{
-  margin: 0;
+  margin: auto;
   padding: 0;
-}
-.chess-board{
   width: 100vw;
   max-width: 728px;
-  height: 100vw;
-  max-height: 728px;
+  display: grid;
+  grid-template-rows: auto auto;
+  grid-row-gap: 10px;
+}
+.top{
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  align-items: center;
+}
+.whose-turn{
+  text-align: right;
+}
+.new-game-btn{
+  border-radius: 100%;
+  width: 80px;
+  height: 80px;
+  text-align: center;
+  justify-self: center;
+  font-weight: bold;
+  cursor: pointer;
+  font-size: 18px;
+  border: 2px solid #585858;
+  background-color: white;
+  box-shadow: 2px 4px;
+  transition: all 0.025s linear;
+}
+.new-game-btn:hover{
+  background-color: #eaeaea;
+}
+.new-game-btn:active{
+  box-shadow: 0 0;
+}
+.chess-board{
+  position: absolute;
+  width: 100%;
+  height: 100%;
   border: 10px solid black;
   display: grid;
   margin: 0; 
@@ -25,7 +57,7 @@ body{
 .white{
   background-color: white;
   /* background-color: #fff362; */
-  transition: background-color .5s linear;  
+  /* transition: background-color .5s linear;   */
 }
 .aqua{
   background-color: #adefe7;
@@ -46,4 +78,41 @@ img{
 }
 .selected{
   background-color: #ff6a6a;
+}
+.container{
+  background-color: red;
+  z-index: 1;
+  width: 100vw;
+  max-width: 728px;
+  height: 100vw;
+  max-height: 728px;
+  position: relative;
+}
+.cover{
+  z-index: -3;
+  position: absolute;
+  opacity: 0;
+  width: 100%;
+  height: 100%;
+  background-color: black;
+  transition: opacity 0.5s ease-in-out;
+}
+.cover.active{
+  z-index: 5;
+  opacity: 0.7; 
+}
+.winner{
+  z-index: -3;
+  position: absolute;
+  top: 50%;
+  width: 100%;
+  text-align: center;
+  transform: translateY(-50%);
+  color: white;
+  opacity: 0;
+  transition: opacity 0.5s ease-in-out;
+}
+.winner.active{
+  z-index: 6;
+  opacity: 1;
 }

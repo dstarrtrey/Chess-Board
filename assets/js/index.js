@@ -43,12 +43,14 @@ $(document).ready(function() {
         myTurn = false;
       }
       if (myTurn === true) {
-        $("#whose-turn").text(myColor.toUpperCase());
+        $("#whose-turn").text(`It is ${myColor}'s turn.`);
       } else {
-        $("whose-turn").text(opponentColor.toUpperCase());
+        $("whose-turn").text(`It is ${opponentColor}'s turn.`);
       }
     }
-    $("#my-color").text(myColor);
+    $("#my-color").text(
+      `My Color: ${myColor.charAt(0).toUpperCase() + myColor.slice(1)}`
+    );
     console.log("players", players);
     console.log("myClientTag", myClientTag);
     console.log("myColor: ", myColor);
@@ -72,15 +74,34 @@ $(document).ready(function() {
         }
       }
     });
+    if (JSON.stringify(snapshot.val()) === JSON.stringify(chessboardStart)) {
+      $(".cover").removeClass("active");
+      $(".winner")
+        .removeClass("active")
+        .empty();
+    }
   });
   currentGame.on("value", function(snapshot) {
     if (snapshot.val().whoseTurn === myColor) {
+      if (amIInCheck()) alert("You are in check! Your next move may be fatal.");
       myTurn = true;
-    } else {
+      $("#whose-turn").text(`It is ${snapshot.val().whoseTurn}'s turn.`);
+    } else if (snapshot.val().whoseTurn === opponentColor) {
       myTurn = false;
+      $("#whose-turn").text(`It is ${snapshot.val().whoseTurn}'s turn.`);
+    } else if (snapshot.val().whoseTurn === `${myColor}wins`) {
+      $(".cover").addClass("active");
+      $(".winner")
+        .addClass("active")
+        .text("You won! Press New Game to play again.");
+      $("#whose-turn").text(`Game Over`);
+    } else if (snapshot.val().whoseTurn === `${opponentColor}wins`) {
+      $(".cover").addClass("active");
+      $(".winner")
+        .addClass("active")
+        .text("You lost. Press New Game to play again.");
+      $("#whose-turn").text(`Game Over`);
     }
-    console.log("myTurn is now: ", myTurn);
-    $("#whose-turn").text(`It is ${snapshot.val().whoseTurn}'s turn.`);
   });
   database.ref("/pieces").on("value", function(snapshot) {
     PIECES = snapshot.val();
@@ -327,32 +348,46 @@ $(document).ready(function() {
   const MOVEPIECE = (piece, location, destination) => {
     let position = location.split("");
     let goTo = destination.split("");
-    $(".hover").removeClass("hover");
-    $(".selected").removeClass("selected");
-    if (piece.hasBeenMoved === false) {
-      PIECES[piece.name].hasBeenMoved = "justMoved";
-      database.ref("/pieces").set(PIECES);
-    } else if (piece.hasBeenMoved === "justMoved") {
-      PIECES[piece.name].hasBeenMoved = true;
-      database.ref("/pieces").set(PIECES);
+    if (chessboard[goTo[0]][goTo[1] - 1] === `${opponentColor[0]}ki`) {
+      currentGame.set({ whoseTurn: `${myColor}wins` });
+    } else {
+      let testBoard = JSON.parse(JSON.stringify(chessboard));
+      chessboard[position[0]][position[1] - 1] = "empty";
+      chessboard[goTo[0]][goTo[1] - 1] = piece.name;
+      $(".hover").removeClass("hover");
+      $(".selected").removeClass("selected");
+      const inCheck = amIInCheck();
+      //if (!inCheck || $(`#${destination}`).attr("data-occupying") === inCheck) {
+      if (piece.hasBeenMoved === false) {
+        PIECES[piece.name].hasBeenMoved = "justMoved";
+        database.ref("/pieces").set(PIECES);
+      } else if (piece.hasBeenMoved === "justMoved") {
+        PIECES[piece.name].hasBeenMoved = true;
+        database.ref("/pieces").set(PIECES);
+      }
+      $(`#${location}`)
+        .removeClass("w b piece")
+        .attr("data-occupying", "")
+        .empty();
+      $(`#${destination}`)
+        .empty()
+        .attr("data-occupying", "")
+        .removeClass("w b piece")
+        .addClass(`${piece.name.charAt(0)} piece`)
+        .attr("data-occupying", piece.name)
+        .append($("<img>").attr("src", piece.img));
+      chessboardRef.set(chessboard);
+      currentGame.set({
+        whoseTurn: opponentColor
+      });
+      /*} else {
+        console.log($(`#${destination}`).attr("data-occupying"));
+        chessboard = testBoard;
+        console.log("invalid move");
+        return "invalid";
+        // $.alert.open("warning", "Invalid Move.");
+      }*/
     }
-    chessboard[position[0]][position[1] - 1] = "empty";
-    chessboard[goTo[0]][goTo[1] - 1] = piece.name;
-    $(`#${location}`)
-      .removeClass("w b piece")
-      .attr("data-occupying", "")
-      .empty();
-    $(`#${destination}`)
-      .empty()
-      .attr("data-occupying", "")
-      .removeClass("w b piece")
-      .addClass(`${piece.name.charAt(0)} piece`)
-      .attr("data-occupying", piece.name)
-      .append($("<img>").attr("src", piece.img));
-    chessboardRef.set(chessboard);
-    currentGame.set({
-      whoseTurn: opponentColor
-    });
   };
   const WHITEMOVEMENTOPTIONS = {
     pawn: (piece, x, y) => {
@@ -618,7 +653,6 @@ $(document).ready(function() {
           }
         }
       }
-      console.log("optionsb4", JSON.stringify(options));
       for (let i = 0; i < options.length; i++) {
         if (
           chessboard[letters[options[i][0]]][options[i][1]][0] === "w" ||
@@ -628,7 +662,15 @@ $(document).ready(function() {
           i--;
         }
       }
-      return options;
+      if (options.length === 0) {
+        console.log("CHECKMATE");
+        return "CHECKMATE";
+      } else {
+        options.forEach(arr => {
+          moveArr.push([letters[arr[0]], arr[1]]);
+        });
+        return moveArr;
+      }
     }
   };
   const BLACKMOVEMENTOPTIONS = {
@@ -851,11 +893,72 @@ $(document).ready(function() {
         }
       });
       return moveArr;
+    },
+    king: (piece, x, y) => {
+      const moveArr = [];
+      //Castle move
+      if (!piece.hasBeenMoved) {
+        if (!PIECES[`${piece.name[0]}r1`].hasBeenMoved) {
+          let go = true;
+          for (let i = 1; i < letters.indexOf(x); i++) {
+            if (chessboard[letters[0]][y] !== "empty") {
+              go = false;
+              break;
+            }
+          }
+          if (go) {
+            moveArr.push(["castleLeft"]);
+          }
+        }
+        if (!PIECES[`${piece.name[0]}r2`].hasBeenMoved) {
+          let go = true;
+          for (let i = letters.indexOf(x) + 1; i < 8; i++) {
+            if (chessboard[letters[0]][y] !== "empty") {
+              go = false;
+              break;
+            }
+          }
+          if (go) {
+            moveArr.push(["castleRight"]);
+          }
+        }
+      }
+      let options = [];
+      for (let i = -1; i <= 1; i++) {
+        for (let j = -1; j <= 1; j++) {
+          if (
+            !(i === 0 && j === 0) &&
+            letters.indexOf(x) + i >= 0 &&
+            letters.indexOf(x) + i < 8 &&
+            y + j >= 0 &&
+            y + j < 8
+          ) {
+            options.push([letters.indexOf(x) + i, y + j]);
+          }
+        }
+      }
+      for (let i = 0; i < options.length; i++) {
+        if (
+          chessboard[letters[options[i][0]]][options[i][1]][0] === "b" ||
+          amIInCheck([letters[options[i][0]], options[i][1]])
+        ) {
+          options.splice(i, 1);
+          i--;
+        }
+      }
+      if (options.length === 0) {
+        return "CHECKMATE";
+      } else {
+        options.forEach(arr => {
+          moveArr.push([letters[arr[0]], arr[1]]);
+        });
+        return moveArr;
+      }
     }
   };
   const showMovementOptions = arr => {
     $(".hover").removeClass("hover");
-    if (arr) {
+    if (arr && arr !== "CHECKMATE") {
       arr.forEach(opt => {
         opt[1]++;
         $(`#${opt.join("")}`).addClass("hover");
@@ -897,11 +1000,10 @@ $(document).ready(function() {
       }
       if (kingPos.length > 0) break;
     }
-    console.log("kingPos", kingPos);
     return kingPos;
   };
   const amIInCheck = (position = myKingPosition()) => {
-    let inCheck = false;
+    let inCheck = "";
     const opponentPieces = $(`.${opponentColor[0]}`).toArray();
     opponentPieces.forEach(piece => {
       const whichPiece = PIECES[$(piece).attr("data-occupying")];
@@ -919,11 +1021,25 @@ $(document).ready(function() {
         if (
           JSON.stringify(pieceOpts).indexOf(JSON.stringify(position)) !== -1
         ) {
-          inCheck = true;
+          inCheck += whichPiece.name;
+        }
+      } else if (myColor === "black" && whichPiece.type !== "king") {
+        pieceOpts = WHITEMOVEMENTOPTIONS[whichPiece.type](
+          whichPiece,
+          pieceXY[0],
+          JSON.parse(pieceXY[1])
+        );
+        if (
+          JSON.stringify(pieceOpts).indexOf(JSON.stringify(position)) !== -1
+        ) {
+          inCheck += whichPiece.name;
         }
       }
     });
-    console.log(inCheck);
+    console.log("inCheck?: ", inCheck);
+    if (inCheck.length > 0) {
+      // $.alert.open("warning", "You are in check.");
+    }
     return inCheck;
   };
   ////////////////////////////////////////////////
@@ -938,11 +1054,7 @@ $(document).ready(function() {
     let xPos = locArr[0];
     let yPos = locArr[1] - 1;
     const thisPiece = PIECES[$(this).attr("data-occupying")];
-    if (
-      !$(this).hasClass("hover") &&
-      !$(this).hasClass("selected") &&
-      !amIInCheck()
-    ) {
+    if (!$(this).hasClass("hover") && !$(this).hasClass("selected")) {
       $(".selected").removeClass("selected");
       $(this).addClass("selected");
       if (myTurn && myColor === "white") {
@@ -962,19 +1074,20 @@ $(document).ready(function() {
     } else if ($(this).hasClass("selected")) {
       $(this).removeClass("selected");
       $(".hover").removeClass("hover");
-    } else if (myTurn && amIInCheck()) {
-      $(".selected").removeClass("selected");
-      $(this).addClass("selected");
-      if (myColor === "white" && thisPiece.name === "wki") {
-        showMovementOptions(
-          WHITEMOVEMENTOPTIONS[thisPiece.type](thisPiece, xPos, yPos)
-        );
-      } else if (myColor === "black" && thisPiece.name === "bki") {
-        showMovementOptions(
-          BLACKMOVEMENTOPTIONS[thisPiece.type](thisPiece, xPos, yPos)
-        );
-      }
-    }
+    } //else if (myTurn && amIInCheck()) {
+    //   $(".selected").removeClass("selected");
+    //   $(this).addClass("selected");
+    //   if (myColor === "white" && thisPiece.name === "wki") {
+    //     console.log("THIS IS THE KING");
+    //     showMovementOptions(
+    //       WHITEMOVEMENTOPTIONS[thisPiece.type](thisPiece, xPos, yPos)
+    //     );
+    //   } else if (myColor === "black" && thisPiece.name === "bki") {
+    //     showMovementOptions(
+    //       BLACKMOVEMENTOPTIONS[thisPiece.type](thisPiece, xPos, yPos)
+    //     );
+    //   }
+    // }
   });
   $(document).on("click", ".hover", function() {
     MOVEPIECE(

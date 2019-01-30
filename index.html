@@ -9,16 +9,31 @@
     <title>Chess board</title>
     <meta name="description" content="">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <link rel="stylesheet" href="assets/css/style.css">
     <script src="https://www.gstatic.com/firebasejs/5.8.1/firebase.js"></script>
     <script src="https://code.jquery.com/jquery-3.3.1.min.js" integrity="sha256-FgpCb/KJQlLNfOu91ta32o/NMZxltwRo8QtmkMRdAu8=" crossorigin="anonymous"></script>
+    <!-- <script src="//ajax.googleapis.com/ajax/libs/jqueryui/1.10.1/jquery-ui.min.js"></script> -->
+
+    <!-- ALERT -->
+<!-- 
+    <link href="alert/css/alert.css" rel="stylesheet" />
+    <link href="alert/themes/default/theme.css" rel="stylesheet" />
+    <script src="alert/js/alert.js"></script> -->
+    <link rel="stylesheet" href="assets/css/style.css">
   </head>
   <body>
     <!--[if lt IE 7]>
       <p class="browsehappy">You are using an <strong>outdated</strong> browser. Please <a href="#">upgrade your browser</a> to improve your experience.</p>
     <![endif]-->
-    <h1 id="my-color"></h1>
-    <div id="chessBoard" class="chess-board"></div>
+    <div class="top">
+      <h1 class="my-color" id="my-color"></h1>
+      <button class="new-game-btn" id="new-game">New Game</button>
+      <h1 class="whose-turn" id="whose-turn"></h1>
+    </div>
+    <div class="container">
+      <div class="cover"></div>
+      <h1 class="winner"></h1>
+      <div id="chessBoard" class="chess-board"></div>
+    </div>
     <script>
       //Initializes Chessboard
       const letters = ["a", "b", "c", "d", "e", "f", "g", "h"];
@@ -38,8 +53,6 @@
         }
       }
     </script>
-    <div id="whose-turn"></div>
-    <button id="new-game">New Game</button>
     <script src="assets/js/index.js" async defer></script>
   </body>
 </html>
