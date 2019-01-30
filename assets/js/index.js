@@ -91,7 +91,9 @@ $(document).ready(function() {
   });
   currentGame.on("value", function(snapshot) {
     if (snapshot.val().whoseTurn === myColor) {
-      if (amIInCheck()) alert("You are in check! Your next move may be fatal.");
+      if (amIInCheck()) {
+        swal("You are in check!", "Your next move may be fatal.", "warning");
+      }
       myTurn = true;
       $("#whose-turn").text(`It is ${snapshot.val().whoseTurn}'s turn.`);
     } else if (snapshot.val().whoseTurn === opponentColor) {
