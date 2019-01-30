@@ -34,20 +34,25 @@ $(document).ready(function() {
     if (connectionArr.length <= 2) {
       players = connectionArr;
       if (myClientTag === players[0]) {
+        $(".new-game-btn").attr("id", "new-game");
         myColor = "white";
         opponentColor = "black";
         myTurn = true;
       } else if (myClientTag === players[1]) {
+        $(".new-game-btn").attr("id", "new-game");
         myColor = "black";
         opponentColor = "white";
         myTurn = false;
-      }
-      if (myTurn === true) {
+      } else if (myTurn === true) {
         $("#whose-turn").text(`It is ${myColor}'s turn.`);
       } else {
         $("whose-turn").text(`It is ${opponentColor}'s turn.`);
       }
+    } else {
+      $("#whose-turn").text(`Waiting for a spot to open.`);
+      $(".new-game-btn").attr("id", "");
     }
+
     $("#my-color").text(
       `My Color: ${myColor.charAt(0).toUpperCase() + myColor.slice(1)}`
     );
