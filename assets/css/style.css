@@ -116,3 +116,6 @@ img{
   z-index: 6;
   opacity: 1;
 }
+#visitors {
+  text-align: center;
+}

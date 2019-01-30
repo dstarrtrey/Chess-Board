@@ -31,6 +31,9 @@ $(document).ready(function() {
   });
   connectionsRef.on("value", function(snapshot) {
     const connectionArr = Object.keys(JSON.parse(JSON.stringify(snapshot)));
+    $("#visitors").text(
+      `${connectionArr.length} user(s) currently on this page`
+    );
     if (connectionArr.length <= 2) {
       players = connectionArr;
       if (myClientTag === players[0]) {
