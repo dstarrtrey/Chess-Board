@@ -5,4 +5,4 @@
 
 **How to play chess (From WikiHow)**: [How to Play Chess](https://www.wikihow.com/Play-Chess)
 
-**For Grace: So we can play chess together without the stress of time constraints**
+**For Grace: So we can play chess together without the stress of time constraints** ❤
