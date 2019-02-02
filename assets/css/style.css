@@ -2,10 +2,11 @@ body{
   margin: auto;
   padding: 0;
   width: 100vw;
-  max-width: 728px;
+  max-width: 85vmin;
   display: grid;
-  grid-template-rows: auto auto;
+  grid-template-rows: auto auto auto;
   grid-row-gap: 10px;
+  position: relative;
 }
 .top{
   display: grid;
@@ -84,9 +85,9 @@ img{
   background-color: red;
   z-index: 1;
   width: 100vw;
-  max-width: 728px;
+  max-width: 85vmin;
   height: 100vw;
-  max-height: 728px;
+  max-height: 85vmin;
   position: relative;
 }
 .cover{
@@ -121,6 +122,32 @@ img{
   text-align: center;
   font-weight: bold;
 }
+.from{
+  background-color: #ff4246;
+}
+.to{
+  background-color: #df0005;
+}
+.y-legend{
+  position: absolute;
+  height: 100vw;
+  max-height: 85vmin;
+  display: grid;
+  grid-template-rows: repeat(8, 12.5%);
+  justify-items: center;
+  align-items: center;
+  left: -3vw;
+  font-weight: bold;
+}
+.x-legend{
+  width: 100vw;
+  max-width: 85vmin;
+  display: grid;
+  position: relative;
+  grid-template-columns: repeat(8, 12.5%);
+  text-align: center;
+  font-weight: bold;
+}
 @media screen and (max-width: 545px) {
   h1{
     font-size: 5.5vw;
@@ -131,7 +158,7 @@ img{
     font-size: 4vw;
     box-shadow: 1px 2px;
   }
-  .visitors{
+  .visitors, .x-legend, .y-legend{
     font-size: 4vw
   }
 }

@@ -14,6 +14,7 @@ $(document).ready(function() {
   const connectedRef = database.ref(".info/connected");
   const chessboardRef = database.ref("/chessboard");
   const currentGame = database.ref("/currentGame");
+  const lastMoveRef = database.ref("/lastMove");
   let myClientTag = "";
   let players = [];
   let myTurn;
@@ -89,10 +90,22 @@ $(document).ready(function() {
         .empty();
     }
   });
+  lastMoveRef.on("value", function(snapshot) {
+    $(".from").removeClass("from");
+    $(".to").removeClass("to");
+    let from = snapshot.val()["from"];
+    let to = snapshot.val()["to"];
+    if (from && to) {
+      $(`#${from}`).addClass("from");
+      $(`#${to}`).addClass("to");
+    }
+  });
   currentGame.on("value", function(snapshot) {
     if (snapshot.val().whoseTurn === myColor) {
       if (amIInCheck()) {
         swal("You are in check!", "Your next move may be fatal.", "warning");
+      } else {
+        swal({ title: "It is your turn. ", buttons: { accept: "Okay" } });
       }
       myTurn = true;
       $("#whose-turn").text(`It is ${snapshot.val().whoseTurn}'s turn.`);
@@ -358,16 +371,146 @@ $(document).ready(function() {
   const MOVEPIECE = (piece, location, destination) => {
     let position = location.split("");
     let goTo = destination.split("");
+    lastMoveRef.set({
+      from: location,
+      to: destination
+    });
+    if ($(`#${destination}`).hasClass("ap")) {
+      console.log($(`#${goTo[0]}${position[1]}`).attr("id"));
+      $(".ap").removeClass("ap");
+      $(`#${goTo[0]}${position[1]}`)
+        .removeClass("w b piece")
+        .attr("data-occupying", "")
+        .empty();
+      chessboard[goTo[0]][position[1] - 1] = "empty";
+    } else if ($(`#${destination}`).hasClass("cml")) {
+      console.log(`#${letters[letters.indexOf(goTo[0]) + 1]}${goTo[1]}`);
+      $(`#a${goTo[1]}`)
+        .attr("data-occupying", "")
+        .removeClass("w b piece")
+        .empty();
+      chessboard[letters[letters.indexOf(goTo[0]) + 1]][goTo[1] - 1] = `${
+        myColor[0]
+      }r1`;
+      chessboard.a[goTo[1] - 1] = "empty";
+      PIECES[`${myColor[0]}ki`].hasBeenMoved = true;
+      PIECES[`${myColor[0]}r1`].hasBeenMoved = true;
+      database.ref("/pieces").set(PIECES);
+    } else if ($(`#${destination}`).hasClass("cmr")) {
+      $(`#h${goTo[1] - 1}`)
+        .attr("data-occupying", "")
+        .removeClass("w b piece")
+        .empty();
+      chessboard[letters[letters.indexOf(goTo[0]) - 1]][goTo[1] - 1] = `${
+        myColor[0]
+      }r2`;
+      chessboard.h[goTo[1] - 1] = "empty";
+      PIECES[`${myColor[0]}ki`].hasBeenMoved = true;
+      PIECES[`${myColor[0]}r2`].hasBeenMoved = true;
+      database.ref("/pieces").set(PIECES);
+      console.log("cml", chessboard);
+    }
     if (chessboard[goTo[0]][goTo[1] - 1] === `${opponentColor[0]}ki`) {
       currentGame.set({ whoseTurn: `${myColor}wins` });
-    } else {
-      let testBoard = JSON.parse(JSON.stringify(chessboard));
-      chessboard[position[0]][position[1] - 1] = "empty";
-      chessboard[goTo[0]][goTo[1] - 1] = piece.name;
+    } else if (
+      piece.type === "pawn" &&
+      (destination[1] === "1" || destination[1] === "8")
+    ) {
       $(".hover").removeClass("hover");
       $(".selected").removeClass("selected");
-      const inCheck = amIInCheck();
-      //if (!inCheck || $(`#${destination}`).attr("data-occupying") === inCheck) {
+      $(`#${location}`)
+        .removeClass("w b piece")
+        .attr("data-occupying", "")
+        .empty();
+      const thisprompt = () => {
+        swal("How will you promote your pawn?", {
+          buttons: {
+            queen: {
+              text: "Queen",
+              value: "queen"
+            },
+            knight: {
+              text: "Knight",
+              value: "knight"
+            },
+            rook: {
+              text: "Rook",
+              value: "rook"
+            },
+            bishop: {
+              text: "Bishop",
+              value: "bishop"
+            }
+          }
+        }).then(value => {
+          switch (value) {
+            case "queen":
+              PIECES[`${myColor[0]}q2`] = {
+                name: `${myColor[0]}q2`,
+                img: `assets/images/${myColor[0]}q.png`,
+                type: "queen"
+              };
+              database.ref("/pieces").set(PIECES);
+              chessboard[goTo[0]][goTo[1] - 1] = PIECES[`${myColor[0]}q2`].name;
+              chessboardRef.set(chessboard);
+              currentGame.set({
+                whoseTurn: opponentColor
+              });
+              break;
+            case "knight":
+              PIECES[`${myColor[0]}k3`] = {
+                name: `${myColor[0]}k3`,
+                img: `assets/images/${myColor[0]}k.png`,
+                type: "knight"
+              };
+              database.ref("/pieces").set(PIECES);
+              chessboard[goTo[0]][goTo[1] - 1] = PIECES[`${myColor[0]}k3`].name;
+              chessboardRef.set(chessboard);
+              currentGame.set({
+                whoseTurn: opponentColor
+              });
+              break;
+            case "rook":
+              PIECES[`${myColor[0]}r3`] = {
+                name: `${myColor[0]}r3`,
+                img: `assets/images/${myColor[0]}r.png`,
+                type: "rook"
+              };
+              database.ref("/pieces").set(PIECES);
+              chessboard[goTo[0]][goTo[1] - 1] = PIECES[`${myColor[0]}r3`].name;
+              chessboardRef.set(chessboard);
+              currentGame.set({
+                whoseTurn: opponentColor
+              });
+              break;
+            case "bishop":
+              PIECES[`${myColor[0]}b3`] = {
+                name: `${myColor[0]}b3`,
+                img: `assets/images/${myColor[0]}b.png`,
+                type: "bishop"
+              };
+              database.ref("/pieces").set(PIECES);
+              chessboard[goTo[0]][goTo[1] - 1] = PIECES[`${myColor[0]}b3`].name;
+              chessboardRef.set(chessboard);
+              currentGame.set({
+                whoseTurn: opponentColor
+              });
+              break;
+            default:
+              thisprompt();
+          }
+        });
+      };
+      thisprompt();
+    } else {
+      $(".hover").removeClass("hover");
+      $(".selected").removeClass("selected");
+      $(`#${location}`)
+        .removeClass("w b piece")
+        .attr("data-occupying", "")
+        .empty();
+      chessboard[position[0]][position[1] - 1] = "empty";
+      chessboard[goTo[0]][goTo[1] - 1] = piece.name;
       if (piece.hasBeenMoved === false) {
         PIECES[piece.name].hasBeenMoved = "justMoved";
         database.ref("/pieces").set(PIECES);
@@ -375,28 +518,10 @@ $(document).ready(function() {
         PIECES[piece.name].hasBeenMoved = true;
         database.ref("/pieces").set(PIECES);
       }
-      $(`#${location}`)
-        .removeClass("w b piece")
-        .attr("data-occupying", "")
-        .empty();
-      $(`#${destination}`)
-        .empty()
-        .attr("data-occupying", "")
-        .removeClass("w b piece")
-        .addClass(`${piece.name.charAt(0)} piece`)
-        .attr("data-occupying", piece.name)
-        .append($("<img>").attr("src", piece.img));
       chessboardRef.set(chessboard);
       currentGame.set({
         whoseTurn: opponentColor
       });
-      /*} else {
-        console.log($(`#${destination}`).attr("data-occupying"));
-        chessboard = testBoard;
-        console.log("invalid move");
-        return "invalid";
-        // $.alert.open("warning", "Invalid Move.");
-      }*/
     }
   };
   const WHITEMOVEMENTOPTIONS = {
@@ -420,7 +545,7 @@ $(document).ready(function() {
             PIECES[chessboard[letters[letters.indexOf(x) - 1]][y]]
               .hasBeenMoved === "justMoved"
           ) {
-            moveArr.push([letters[letters.indexOf(x) - 1], y + 1]);
+            moveArr.push(["ap", letters[letters.indexOf(x) - 1], y + 1]);
           }
         }
       }
@@ -434,7 +559,7 @@ $(document).ready(function() {
             PIECES[chessboard[letters[letters.indexOf(x) + 1]][y]]
               .hasBeenMoved === "justMoved"
           ) {
-            moveArr.push([letters[letters.indexOf(x) + 1], y + 1]);
+            moveArr.push(["ap", letters[letters.indexOf(x) + 1], y + 1]);
           }
         }
       }
@@ -626,26 +751,31 @@ $(document).ready(function() {
       if (!piece.hasBeenMoved) {
         if (!PIECES[`${piece.name[0]}r1`].hasBeenMoved) {
           let go = true;
-          for (let i = 1; i < letters.indexOf(x); i++) {
-            if (chessboard[letters[0]][y] !== "empty") {
-              go = false;
-              break;
+          if (chessboard["a"][0] !== "empty") {
+            for (let i = 1; i < letters.indexOf(x); i++) {
+              if (chessboard[letters[i]][0] !== "empty") {
+                go = false;
+                break;
+              }
             }
           }
           if (go) {
-            moveArr.push(["castleLeft"]);
+            moveArr.push(["cml", "c", 0]);
           }
         }
         if (!PIECES[`${piece.name[0]}r2`].hasBeenMoved) {
           let go = true;
-          for (let i = letters.indexOf(x) + 1; i < 8; i++) {
-            if (chessboard[letters[0]][y] !== "empty") {
-              go = false;
-              break;
+          if (chessboard[letters[7]][0] !== "empty") {
+            for (let i = letters.indexOf(x) + 1; i < 7; i++) {
+              console.log(i, chessboard[letters[i]][0]);
+              if (chessboard[letters[i]][0] !== "empty") {
+                go = false;
+                break;
+              }
             }
           }
           if (go) {
-            moveArr.push(["castleRight"]);
+            moveArr.push(["cmr", "g", 0]);
           }
         }
       }
@@ -668,19 +798,18 @@ $(document).ready(function() {
           chessboard[letters[options[i][0]]][options[i][1]][0] === "w" ||
           amIInCheck([letters[options[i][0]], options[i][1]])
         ) {
+          console.log(
+            "well am I?",
+            amIInCheck([letters[options[i][0]], options[i][1]])
+          );
           options.splice(i, 1);
           i--;
         }
       }
-      if (options.length === 0) {
-        console.log("CHECKMATE");
-        return "CHECKMATE";
-      } else {
-        options.forEach(arr => {
-          moveArr.push([letters[arr[0]], arr[1]]);
-        });
-        return moveArr;
-      }
+      options.forEach(arr => {
+        moveArr.push([letters[arr[0]], arr[1]]);
+      });
+      return moveArr;
     }
   };
   const BLACKMOVEMENTOPTIONS = {
@@ -704,7 +833,7 @@ $(document).ready(function() {
             PIECES[chessboard[letters[letters.indexOf(x) - 1]][y]]
               .hasBeenMoved === "justMoved"
           ) {
-            moveArr.push([letters[letters.indexOf(x) - 1], y - 1]);
+            moveArr.push(["ap", letters[letters.indexOf(x) - 1], y - 1]);
           }
         }
       }
@@ -718,7 +847,7 @@ $(document).ready(function() {
             PIECES[chessboard[letters[letters.indexOf(x) + 1]][y]]
               .hasBeenMoved === "justMoved"
           ) {
-            moveArr.push([letters[letters.indexOf(x) + 1], y - 1]);
+            moveArr.push(["ap", letters[letters.indexOf(x) + 1], y - 1]);
           }
         }
       }
@@ -910,26 +1039,30 @@ $(document).ready(function() {
       if (!piece.hasBeenMoved) {
         if (!PIECES[`${piece.name[0]}r1`].hasBeenMoved) {
           let go = true;
-          for (let i = 1; i < letters.indexOf(x); i++) {
-            if (chessboard[letters[0]][y] !== "empty") {
-              go = false;
-              break;
+          if (chessboard["a"][7] !== "empty") {
+            for (let i = 1; i < letters.indexOf(x); i++) {
+              if (chessboard[letters[i]][7] !== "empty") {
+                go = false;
+                break;
+              }
             }
           }
           if (go) {
-            moveArr.push(["castleLeft"]);
+            moveArr.push(["cml", "b", 7]);
           }
         }
         if (!PIECES[`${piece.name[0]}r2`].hasBeenMoved) {
           let go = true;
-          for (let i = letters.indexOf(x) + 1; i < 8; i++) {
-            if (chessboard[letters[0]][y] !== "empty") {
-              go = false;
-              break;
+          if (chessboard[letters[7]][7] !== "empty") {
+            for (let i = letters.indexOf(x) + 1; i < 7; i++) {
+              if (chessboard[letters[i]][7] !== "empty") {
+                go = false;
+                break;
+              }
             }
           }
           if (go) {
-            moveArr.push(["castleRight"]);
+            moveArr.push(["cmr", "f", 7]);
           }
         }
       }
@@ -956,28 +1089,40 @@ $(document).ready(function() {
           i--;
         }
       }
-      if (options.length === 0) {
-        return "CHECKMATE";
-      } else {
-        options.forEach(arr => {
-          moveArr.push([letters[arr[0]], arr[1]]);
-        });
-        return moveArr;
-      }
+      options.forEach(arr => {
+        moveArr.push([letters[arr[0]], arr[1]]);
+      });
+      return moveArr;
     }
   };
   const showMovementOptions = arr => {
     $(".hover").removeClass("hover");
+    console.log("movement array: ", arr);
     if (arr && arr !== "CHECKMATE") {
       arr.forEach(opt => {
-        opt[1]++;
-        $(`#${opt.join("")}`).addClass("hover");
+        if (opt[0] === "ap") {
+          opt[2]++;
+          $(`#${opt[1] + opt[2]}`).addClass("hover ap");
+        } else if (opt[0] === "cml") {
+          opt[2]++;
+          $(`#${opt[1] + opt[2]}`).addClass("hover cml");
+        } else if (opt[0] === "cmr") {
+          opt[2]++;
+          $(`#${opt[1] + opt[2]}`).addClass("hover cmr");
+        } else {
+          opt[1]++;
+          $(`#${opt.join("")}`).addClass("hover");
+        }
       });
     }
   };
   const setUpGame = () => {
     chessboard = JSON.parse(JSON.stringify(chessboardStart));
     chessboardRef.set(chessboard);
+    lastMoveRef.set({
+      from: "",
+      to: ""
+    });
     currentGame.set({
       whoseTurn: "white"
     });
@@ -1046,7 +1191,6 @@ $(document).ready(function() {
         }
       }
     });
-    console.log("inCheck?: ", inCheck);
     if (inCheck.length > 0) {
       // $.alert.open("warning", "You are in check.");
     }
@@ -1069,7 +1213,6 @@ $(document).ready(function() {
       $(this).addClass("selected");
       if (myTurn && myColor === "white") {
         if ($(this).hasClass("w")) {
-          console.log("thisPiece: ", thisPiece);
           showMovementOptions(
             WHITEMOVEMENTOPTIONS[thisPiece.type](thisPiece, xPos, yPos)
           );
@@ -1084,20 +1227,7 @@ $(document).ready(function() {
     } else if ($(this).hasClass("selected")) {
       $(this).removeClass("selected");
       $(".hover").removeClass("hover");
-    } //else if (myTurn && amIInCheck()) {
-    //   $(".selected").removeClass("selected");
-    //   $(this).addClass("selected");
-    //   if (myColor === "white" && thisPiece.name === "wki") {
-    //     console.log("THIS IS THE KING");
-    //     showMovementOptions(
-    //       WHITEMOVEMENTOPTIONS[thisPiece.type](thisPiece, xPos, yPos)
-    //     );
-    //   } else if (myColor === "black" && thisPiece.name === "bki") {
-    //     showMovementOptions(
-    //       BLACKMOVEMENTOPTIONS[thisPiece.type](thisPiece, xPos, yPos)
-    //     );
-    //   }
-    // }
+    }
   });
   $(document).on("click", ".hover", function() {
     MOVEPIECE(
