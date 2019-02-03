@@ -2,7 +2,7 @@ body{
   margin: auto;
   padding: 0;
   width: 100vw;
-  max-width: 600px;
+  max-width: 800px;
   display: grid;
   grid-template-rows: auto auto auto;
   grid-row-gap: 10px;
@@ -89,9 +89,9 @@ img{
   background-color: red;
   z-index: 1;
   width: 100vw;
-  max-width: 600px;
+  max-width: 800px;
   height: 100vw;
-  max-height: 600px;
+  max-height: 800px;
   position: relative;
 }
 .cover{
@@ -136,7 +136,7 @@ img{
   visibility: visible;
   position: absolute;
   height: 100vw;
-  max-height: 600px;
+  max-height: 800px;
   display: grid;
   grid-template-rows: repeat(8, 12.5%);
   justify-items: center;
@@ -147,7 +147,7 @@ img{
 .x-legend{
   visibility: visible;
   width: 100vw;
-  max-width: 600px;
+  max-width: 800px;
   display: grid;
   position: relative;
   grid-template-columns: repeat(8, 12.5%);
