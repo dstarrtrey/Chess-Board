@@ -154,13 +154,15 @@ img{
   text-align: center;
   font-weight: bold;
 }
-@media screen and (max-width: 545px) {
+@media screen and (max-width: 880px) {
   .x-legend{
     visibility: hidden;
   }
   .y-legend{
     visibility: hidden;
   }
+}
+@media screen and (max-width: 545px) {
   h1{
     font-size: 5.5vw;
   }
