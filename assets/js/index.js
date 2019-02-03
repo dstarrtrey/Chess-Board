@@ -793,15 +793,13 @@ $(document).ready(function() {
           }
         }
       }
+      console.log("options", options);
       for (let i = 0; i < options.length; i++) {
+        console.log("option: ", options[i]);
         if (
           chessboard[letters[options[i][0]]][options[i][1]][0] === "w" ||
           amIInCheck([letters[options[i][0]], options[i][1]])
         ) {
-          console.log(
-            "well am I?",
-            amIInCheck([letters[options[i][0]], options[i][1]])
-          );
           options.splice(i, 1);
           i--;
         }
@@ -1081,6 +1079,7 @@ $(document).ready(function() {
         }
       }
       for (let i = 0; i < options.length; i++) {
+        console.log("option", options[i]);
         if (
           chessboard[letters[options[i][0]]][options[i][1]][0] === "b" ||
           amIInCheck([letters[options[i][0]], options[i][1]])
@@ -1174,7 +1173,20 @@ $(document).ready(function() {
           JSON.parse(pieceXY[1])
         );
         if (
+          whichPiece.type !== "pawn" &&
           JSON.stringify(pieceOpts).indexOf(JSON.stringify(position)) !== -1
+        ) {
+          inCheck += whichPiece.name;
+        } else if (
+          whichPiece.type === "pawn" &&
+          (JSON.stringify([
+            letters[letters.indexOf(pieceXY[0]) + 1],
+            pieceXY[1] - 1
+          ]) === JSON.stringify(position) ||
+            JSON.stringify([
+              letters[letters.indexOf(pieceXY[0]) - 1],
+              pieceXY[1] - 1
+            ]) === JSON.stringify(position))
         ) {
           inCheck += whichPiece.name;
         }
@@ -1185,15 +1197,25 @@ $(document).ready(function() {
           JSON.parse(pieceXY[1])
         );
         if (
+          whichPiece.type !== "pawn" &&
           JSON.stringify(pieceOpts).indexOf(JSON.stringify(position)) !== -1
+        ) {
+          inCheck += whichPiece.name;
+        } else if (
+          whichPiece.type === "pawn" &&
+          (JSON.stringify([
+            letters[letters.indexOf(pieceXY[0]) + 1],
+            pieceXY[1] - 1
+          ]) === JSON.stringify(position) ||
+            JSON.stringify([
+              letters[letters.indexOf(pieceXY[0]) - 1],
+              pieceXY[1] - 1
+            ]) === JSON.stringify(position))
         ) {
           inCheck += whichPiece.name;
         }
       }
     });
-    if (inCheck.length > 0) {
-      // $.alert.open("warning", "You are in check.");
-    }
     return inCheck;
   };
   ////////////////////////////////////////////////
