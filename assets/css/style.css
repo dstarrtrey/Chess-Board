@@ -1,7 +1,7 @@
 body{
   margin: auto;
   padding: 0;
-  width: 100vw;
+  width: 80vh;
   max-width: 800px;
   display: grid;
   grid-template-rows: auto auto auto;
@@ -18,18 +18,18 @@ body{
   text-align: right;
 }
 h1{
-  font-size: 27px;
+  font-size: 4vh;
 }
 .new-game-btn{
   border-radius: 100%;
   padding: 0;
-  width: 80px;
-  height: 80px;
+  width: 10vh;
+  height: 10vh;
   text-align: center;
   justify-self: center;
   font-weight: bold;
   cursor: pointer;
-  font-size: 18px;
+  font-size: 3vh;
   border: 2px solid #585858;
   background-color: white;
   box-shadow: 2px 4px;
@@ -88,9 +88,9 @@ img{
 .container{
   background-color: red;
   z-index: 1;
-  width: 100vw;
+  width: 80vh;
   max-width: 800px;
-  height: 100vw;
+  height: 80vh;
   max-height: 800px;
   position: relative;
 }
@@ -125,6 +125,9 @@ img{
 .visitors {
   text-align: center;
   font-weight: bold;
+  position: relative;
+  top: -2vh;
+  font-size: 2vh;
 }
 .from{
   background-color: #ff4246;
@@ -135,7 +138,7 @@ img{
 .y-legend{
   visibility: visible;
   position: absolute;
-  height: 100vw;
+  height: 80vh;
   max-height: 800px;
   display: grid;
   grid-template-rows: repeat(8, 12.5%);
@@ -146,7 +149,7 @@ img{
 }
 .x-legend{
   visibility: visible;
-  width: 100vw;
+  width: 80vh;
   max-width: 800px;
   display: grid;
   position: relative;
@@ -162,7 +165,7 @@ img{
     visibility: hidden;
   }
 }
-@media screen and (max-width: 545px) {
+@media screen and (max-width: 460px) {
   h1{
     font-size: 5.5vw;
   }
