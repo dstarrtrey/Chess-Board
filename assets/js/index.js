@@ -13,13 +13,17 @@ $(document).ready(function() {
   const connectionsRef = database.ref("/connections");
   const connectedRef = database.ref(".info/connected");
   const chessboardRef = database.ref("/chessboard");
+  const historyRef = database.ref("/history");
   const currentGame = database.ref("/currentGame");
   const lastMoveRef = database.ref("/lastMove");
+  const piecesRef = database.ref("/pieces");
+  const undoRef = database.ref("/undo");
   let myClientTag = "";
   let players = [];
   let myTurn;
   let myColor;
   let opponentColor;
+  let history;
   connectedRef.on("value", function(snapshot) {
     // If they are connected..
     if (snapshot.val()) {
@@ -100,6 +104,24 @@ $(document).ready(function() {
       $(`#${to}`).addClass("to");
     }
   });
+  undoRef.on("value", function(snapshot) {
+    if (snapshot.val().white && snapshot.val().black) {
+      undoRef.set({ white: false, black: false });
+      currentGame.set({ whoseTurn: history.whoseTurn });
+      piecesRef.set(history.pieces);
+      chessboardRef.set(history.lastBoard);
+      $(".from").removeClass("from");
+      $(".to").removeClass("to");
+    } else if (snapshot.val().white && myColor === "black") {
+      swal("White has suggested an undo! Press undo to comply.");
+    } else if (snapshot.val().black && myColor === "white") {
+      swal("Black has suggested an undo! Press undo to comply.");
+    }
+  });
+  historyRef.on("value", function(snapshot){
+    history = snapshot.val();
+    console.log(history);
+  });
   currentGame.on("value", function(snapshot) {
     if (snapshot.val().whoseTurn === myColor) {
       if (amIInCheck()) {
@@ -126,20 +148,9 @@ $(document).ready(function() {
       $("#whose-turn").text(`Game Over`);
     }
   });
-  database.ref("/pieces").on("value", function(snapshot) {
+  piecesRef.on("value", function(snapshot) {
     PIECES = snapshot.val();
   });
-  //THIS IS SIDEWAYS
-  const chessboardTemplate = {
-    a: [1, 2, 3, 4, 5, 6, 7, 8],
-    b: [1, 2, 3, 4, 5, 6, 7, 8],
-    c: [1, 2, 3, 4, 5, 6, 7, 8],
-    d: [1, 2, 3, 4, 5, 6, 7, 8],
-    e: [1, 2, 3, 4, 5, 6, 7, 8],
-    f: [1, 2, 3, 4, 5, 6, 7, 8],
-    g: [1, 2, 3, 4, 5, 6, 7, 8],
-    h: [1, 2, 3, 4, 5, 6, 7, 8]
-  };
   const chessboardStart = {
     a: ["wr1", "wp1", "empty", "empty", "empty", "empty", "bp1", "br1"],
     b: ["wk1", "wp2", "empty", "empty", "empty", "empty", "bp2", "bk1"],
@@ -371,6 +382,11 @@ $(document).ready(function() {
   const MOVEPIECE = (piece, location, destination) => {
     let position = location.split("");
     let goTo = destination.split("");
+    historyRef.set({
+      pieces: PIECES,
+      lastBoard: chessboard,
+      whoseTurn: myColor
+    });
     lastMoveRef.set({
       from: location,
       to: destination
@@ -395,7 +411,7 @@ $(document).ready(function() {
       chessboard.a[goTo[1] - 1] = "empty";
       PIECES[`${myColor[0]}ki`].hasBeenMoved = true;
       PIECES[`${myColor[0]}r1`].hasBeenMoved = true;
-      database.ref("/pieces").set(PIECES);
+      piecesRef.set(PIECES);
     } else if ($(`#${destination}`).hasClass("cmr")) {
       $(`#h${goTo[1] - 1}`)
         .attr("data-occupying", "")
@@ -407,8 +423,7 @@ $(document).ready(function() {
       chessboard.h[goTo[1] - 1] = "empty";
       PIECES[`${myColor[0]}ki`].hasBeenMoved = true;
       PIECES[`${myColor[0]}r2`].hasBeenMoved = true;
-      database.ref("/pieces").set(PIECES);
-      console.log("cml", chessboard);
+      piecesRef.set(PIECES);
     }
     if (chessboard[goTo[0]][goTo[1] - 1] === `${opponentColor[0]}ki`) {
       currentGame.set({ whoseTurn: `${myColor}wins` });
@@ -450,7 +465,7 @@ $(document).ready(function() {
                 img: `assets/images/${myColor[0]}q.png`,
                 type: "queen"
               };
-              database.ref("/pieces").set(PIECES);
+              piecesRef.set(PIECES);
               chessboard[goTo[0]][goTo[1] - 1] = PIECES[`${myColor[0]}q2`].name;
               chessboardRef.set(chessboard);
               currentGame.set({
@@ -463,7 +478,7 @@ $(document).ready(function() {
                 img: `assets/images/${myColor[0]}k.png`,
                 type: "knight"
               };
-              database.ref("/pieces").set(PIECES);
+              piecesRef.set(PIECES);
               chessboard[goTo[0]][goTo[1] - 1] = PIECES[`${myColor[0]}k3`].name;
               chessboardRef.set(chessboard);
               currentGame.set({
@@ -476,7 +491,7 @@ $(document).ready(function() {
                 img: `assets/images/${myColor[0]}r.png`,
                 type: "rook"
               };
-              database.ref("/pieces").set(PIECES);
+              piecesRef.set(PIECES);
               chessboard[goTo[0]][goTo[1] - 1] = PIECES[`${myColor[0]}r3`].name;
               chessboardRef.set(chessboard);
               currentGame.set({
@@ -489,7 +504,7 @@ $(document).ready(function() {
                 img: `assets/images/${myColor[0]}b.png`,
                 type: "bishop"
               };
-              database.ref("/pieces").set(PIECES);
+              piecesRef.set(PIECES);
               chessboard[goTo[0]][goTo[1] - 1] = PIECES[`${myColor[0]}b3`].name;
               chessboardRef.set(chessboard);
               currentGame.set({
@@ -513,10 +528,10 @@ $(document).ready(function() {
       chessboard[goTo[0]][goTo[1] - 1] = piece.name;
       if (piece.hasBeenMoved === false) {
         PIECES[piece.name].hasBeenMoved = "justMoved";
-        database.ref("/pieces").set(PIECES);
+        piecesRef.set(PIECES);
       } else if (piece.hasBeenMoved === "justMoved") {
         PIECES[piece.name].hasBeenMoved = true;
-        database.ref("/pieces").set(PIECES);
+        piecesRef.set(PIECES);
       }
       chessboardRef.set(chessboard);
       currentGame.set({
@@ -1128,7 +1143,7 @@ $(document).ready(function() {
     Object.keys(PIECES).forEach(piece => {
       PIECES[piece].hasBeenMoved = false;
     });
-    database.ref("/pieces").set(PIECES);
+    piecesRef.set(PIECES);
     $(".piece")
       .empty()
       .removeClass("w b piece")
@@ -1260,5 +1275,12 @@ $(document).ready(function() {
   });
   $(document).on("click", "#new-game", function() {
     setUpGame();
+  });
+  $(document).on("click", "#undo-btn", function() {
+    if (myColor === "white") {
+      undoRef.update({ white: true });
+    } else if (myColor === "black") {
+      undoRef.update({ black: true });
+    }
   });
 });
